@@ -86,6 +86,12 @@ async function wd_ttb_auto(acc_type, agent_id) {
     //   for all_job {
     let job = all_job[0];
     // }
+    //------------------update processing---------------//
+    let {
+      _id,
+      description,
+    } = job;
+    // await model.update_status_wd(_id,'processing',description);
     const setChromeOptions = new chrome.Options();
     setChromeOptions.addArguments("--no-sandbox");
     // setChromeOptions.addArguments('--headless');
@@ -102,10 +108,12 @@ async function wd_ttb_auto(acc_type, agent_id) {
     await driver.sleep(2000);
     await step_Login(driver, agent_bankacc_username, agent_bankacc_password);
     await step_clickabountme(driver);
-    await step_del_firstcontact(driver);
+    // await step_del_firstcontact(driver);
     await step_add_contact(driver, job);
     await step_insert_tranfer_acc(driver);
     await step_logout(driver);
+    //-------------------update doc------------------//
+    // await model.update_doc_wd();
   } catch (err) {
     await fn_logout(driver);
     console.log(err);
@@ -187,8 +195,8 @@ async function wd_ttb_auto(acc_type, agent_id) {
         memb_bank_nameen,
         memb_bank_account_number,
       } = job;
-      console.log('memb_bank_account_name', memb_bank_account_name)
-      console.log('memb_bank_nameen', memb_bank_nameen)
+      console.log("memb_bank_account_name =>", memb_bank_account_name);
+      console.log("memb_bank_nameen =>", memb_bank_nameen);
       //-------add favorites contact-------//
       await driver
         .findElement(By.id("frmIBMyReceipentsHome_btnAddFavorites"))
@@ -218,8 +226,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
             )
             .getText();
           console.log(textBookBank);
-          
-          if (textBookBank.match(/ + memb_bank_nameen + /g)) {
+          if (textBookBank.match(memb_bank_nameen)) {
             await driver
               .wait(
                 until.elementLocated(
@@ -235,107 +242,14 @@ async function wd_ttb_auto(acc_type, agent_id) {
             break;
           }
         }
-      // } else if (data_wd.bank_contact == "ktb") {
-      //   for (let i = 1; i <= lengthElems - 1; i++) {
-      //     let textBookBank = await driver
-      //       .wait(
-      //         until.elementLocated(
-      //           By.xpath(
-      //             '//*[@id="frmIBMyReceipentsAddBankAccnt_comboBankName"]/option[' +
-      //               i +
-      //               "]"
-      //           )
-      //         ),
-      //         1000
-      //       )
-      //       .getText();
-      //     console.log(textBookBank);
-      //     if (textBookBank.match(/Krung Thai Bank/g)) {
-      //       await driver
-      //         .wait(
-      //           until.elementLocated(
-      //             By.xpath(
-      //               '//*[@id="frmIBMyReceipentsAddBankAccnt_comboBankName"]/option[' +
-      //                 i +
-      //                 "]"
-      //             )
-      //           ),
-      //           3000
-      //         )
-      //         .click();
-      //       break;
-      //     }
-      //   }
-      // } else if (data_wd.bank_contact == "ttb") {
-      //   for (let i = 1; i <= lengthElems - 1; i++) {
-      //     let textBookBank = await driver
-      //       .wait(
-      //         until.elementLocated(
-      //           By.xpath(
-      //             '//*[@id="frmIBMyReceipentsAddBankAccnt_comboBankName"]/option[' +
-      //               i +
-      //               "]"
-      //           )
-      //         ),
-      //         1000
-      //       )
-      //       .getText();
-      //     console.log(textBookBank);
-      //     if (textBookBank.match(/TMBThanachart Bank/g)) {
-      //       await driver
-      //         .wait(
-      //           until.elementLocated(
-      //             By.xpath(
-      //               '//*[@id="frmIBMyReceipentsAddBankAccnt_comboBankName"]/option[' +
-      //                 i +
-      //                 "]"
-      //             )
-      //           ),
-      //           3000
-      //         )
-      //         .click();
-      //       break;
-      //     }
-      //   }
-      // } else if (data_wd.bank_contact == "scb") {
-      //   for (let i = 1; i <= lengthElems - 1; i++) {
-      //     let textBookBank = await driver
-      //       .wait(
-      //         until.elementLocated(
-      //           By.xpath(
-      //             '//*[@id="frmIBMyReceipentsAddBankAccnt_comboBankName"]/option[' +
-      //               i +
-      //               "]"
-      //           )
-      //         ),
-      //         1000
-      //       )
-      //       .getText();
-      //     console.log(textBookBank);
-      //     if (textBookBank.match(/Siam Commercial Bank/g)) {
-      //       await driver
-      //         .wait(
-      //           until.elementLocated(
-      //             By.xpath(
-      //               '//*[@id="frmIBMyReceipentsAddBankAccnt_comboBankName"]/option[' +
-      //                 i +
-      //                 "]"
-      //             )
-      //           ),
-      //           3000
-      //         )
-      //         .click();
-      //       break;
-      //     }
-        // }
       } else {
         console.log("No Data Bank Contact");
-        throw (err)
+        throw err;
       }
       //-----------add account number------------//
       await driver
         .findElement(By.id("frmIBMyReceipentsAddBankAccnt_tbxAddAccntNumber"))
-        .sendKeys(data_wd.acc_contact);
+        .sendKeys(memb_bank_account_number);
       await driver
         .findElement(By.id("frmIBMyReceipentsAddBankAccnt_btnAddAccntNext"))
         .click();
@@ -363,16 +277,16 @@ async function wd_ttb_auto(acc_type, agent_id) {
           1000
         )
         .getText();
-      ref = { Ref: ref };
-      console.log("ref", ref);
-      console.log("mob", mob);
+      console.log("ref =>", ref);
+      console.log("mob =>", mob);
       await driver.sleep(4000);
-      let OTP = await fn.find_OTP(ref);
-      console.log("OTP : ", OTP);
+      let OTP = await model.callOTP(ref);
+      console.log("OTP =>", OTP);
+      await model.removeOTP(OTP[0]._id);
       //---------------Confirm OTP-------------//
       await driver
         .findElement(By.id("frmIBMyReceipentsAddContactManually_txtotp"))
-        .sendKeys(OTP);
+        .sendKeys(OTP[0].value);
       await driver.sleep(500);
       await driver
         .findElement(
@@ -393,8 +307,15 @@ async function wd_ttb_auto(acc_type, agent_id) {
     }
   }
 
-  async function step_insert_tranfer_acc(driver) {
+  async function step_insert_tranfer_acc(driver, job) {
     try {
+      //----------prepare data_wd----------//
+      let {
+        amount,
+        agent_id,
+        memb_bank_account_id,
+        description,
+      } = job;
       //------click bank item0-------//
       button = await driver.wait(
         until.elementLocated(By.xpath('//*[@id="item-0"]/table/tbody')),
@@ -426,7 +347,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
       await driver.sleep(1000);
       await driver
         .findElement(By.id("frmIBTranferLP_txbXferAmountRcvd"))
-        .sendKeys(data_wd.amount_wd);
+        .sendKeys(amount);
       await driver.sleep(500);
       button = await driver.wait(
         until.elementLocated(By.id("frmIBTranferLP_txtArMn")),
@@ -455,11 +376,10 @@ async function wd_ttb_auto(acc_type, agent_id) {
           1000
         )
         .getText();
-      ref = { Ref: ref };
-      console.log("ref", ref);
+      console.log("ref =>", ref);
       await driver.sleep(4000);
-      let OTP = await fn.find_OTP(ref);
-      console.log("OTP : ", OTP);
+      let OTP = await model.callOTP(ref);
+      console.log("OTP =>", OTP);
       //---------------Confirm OTP-------------//
       await driver
         .findElement(By.id("frmIBTransferNowConfirmation_txtBxOTP"))
@@ -469,14 +389,14 @@ async function wd_ttb_auto(acc_type, agent_id) {
         .findElement(By.id("frmIBTransferNowConfirmation_brnConfirm"))
         .click();
       await driver.sleep(1000);
-      //---------------Task Screen-------------//
+      //---------------get data-------------//
       let balance = await driver
         .wait(
           until.elementLocated(By.id("frmIBTransferNowCompletion_lblBal")),
           1000
         )
         .getText();
-      console.log("balance: ", balance);
+      console.log("balance =>", balance);
       let acc = await driver
         .wait(
           until.elementLocated(
@@ -485,7 +405,14 @@ async function wd_ttb_auto(acc_type, agent_id) {
           1000
         )
         .getText();
-      console.log("acc: ", acc);
+      console.log("acc =>", acc);
+      //--------------update data_wd------------//
+      description.concat({username:"robot",note:"######",note_date:new Date(moment().format())})
+      let memname = await model.get_member_name(agent_id,memb_bank_account_id);
+      console.log('member name =>', memname)
+      // await model.update_member_name();
+      // await model.updatebalance(_id,balance);
+      //---------------Task Screen-------------//
       // let base64 = await driver
       //   .wait(
       //     until.elementsLocated(By.id("frmIBTransferNowCompletion_vbxTransaction")),
@@ -534,17 +461,11 @@ async function wd_ttb_auto(acc_type, agent_id) {
   //       throw err;
   //     });
   //     console.log("result => ", result);
-  //     // let remove = await model.callOTP(request.body.Ref).catch(() => {
-  //     //   throw err;
-  //     // });
   //     if (result.length !== 0) {
   //       console.log(result[0].value);
   //       let remove = await model.removeOTP(result[0]._id).catch(() => {
   //         throw err;
   //       });
-  //       //   response
-  //       //     .send({ status: "200", message: "success", result: result[0] })
-  //       // .end();
   //       return result[0].value;
   //     } else {
   //       console.log(result[0]);
@@ -559,10 +480,6 @@ async function wd_ttb_auto(acc_type, agent_id) {
   //   } catch (err) {
   //     throw err;
   //   }
-  //   // } catch (err) {
-  //   //   console.log(err);
-  //   //   response.send({ status: "400", message: "error", err }).end();
-  //   // }
   // }
 
   // async function remove(request, response) {

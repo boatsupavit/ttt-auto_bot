@@ -1,5 +1,6 @@
 const { ObjectId, Double } = require("mongodb");
-const { MongoDB } = require("../config/mongodb");
+// const { MongoDB } = require("../config/mongodb");
+const { MongoDB } = require("../build/mongodb");
 const moment = require("moment");
 
 module.exports.callOTP = (ref) => {
@@ -113,10 +114,10 @@ module.exports.get_data_wd = (_id, agent_id) => {
 };
 
 module.exports.insert_data_dp = (data, agent_id, bank_id, account_id) => {
-  console.log("Date", data.cr_date, "Time", data.cr_time);
-  console.log("------------------------------------");
+  console.log("insert DB --- Date", data.cr_date, "Time", data.cr_time);
+  console.log("------------------------------------*********************");
   console.log("data", data);
-  console.log("------------------------------------");
+  console.log("collectioning ------------------------------------");
   return new Promise(async (resolve, reject) => {
     await MongoDB.collection("bank_transaction")
       .insertOne({
@@ -142,9 +143,16 @@ module.exports.insert_data_dp = (data, agent_id, bank_id, account_id) => {
         upd_by: null,
         upd_date: null,
         upd_prog: null,
-      })
+      },{ordered:false})
       .then((result) => resolve(result))
-      .catch((error) => reject(error));
+      .catch(error=>{
+        if(error.code === 11000){
+        console.log('dup transaction')
+        resolve(error)
+        }else{
+        reject(error)
+        }
+        });
   });
 };
 

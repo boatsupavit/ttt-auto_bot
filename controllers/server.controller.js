@@ -8,6 +8,7 @@ const moment = require("moment");
 const chrome = require("selenium-webdriver/chrome");
 const { request } = require("express");
 const imageToBase64 = require("image-to-base64");
+const { CronJob } = require("cron");
 var working = false;
 
 //--------------TTB--------------//
@@ -15,56 +16,85 @@ var working = false;
 //   username_ttb: "natkingsize2",
 //   password_ttb: "natl@2iriY",
 // };
-const data_wd = {
-  bank_contact: "scb",
-  name_contact: "NatkingsizeNaja",
-  acc_contact: "0602977904",
-  amount_wd: "0.25",
+// const data_wd = {
+//   bank_contact: "scb",
+//   name_contact: "NatkingsizeNaja",
+//   acc_contact: "0602977904",
+//   amount_wd: "0.25",
+// };
+
+module.exports = async () => {
+  new CronJob("*/20 * * * * *",async () => {
+      try {
+        console.log("start conjob robot" + new Date());
+        if (working !== true) {
+          console.log("working", working);
+          working = true;
+          console.log("working", working);
+
+          //----------get ip-----------//
+          // let ip = await fn.get_ip();
+          // let ip = "192.168.1.78"; //----deposit
+          let ip = "192.168.1.89"; //----withdraw
+          //--------------------------//
+
+          console.log("ip =>", ip);
+          let web_id = await model.getagentid(ip);
+          console.log("agent", web_id);
+          let acc_type = web_id[0].robot.account_type;
+          let bank_id = web_id[0].robot.bank_id;
+          let agent_id = web_id[0]._id;
+          console.log("acc_type =>", acc_type);
+          console.log("bank_id =>", bank_id);
+          console.log("agent_id =>", agent_id);
+          if (acc_type == "deposit") {
+            let setChromeOptions = new chrome.Options();
+            //setChromeOptions.addArguments('--headless');
+            setChromeOptions.addArguments("--no-sandbox");
+            setChromeOptions.addArguments("--hide-scrollbars");
+            setChromeOptions.addArguments("window-size=1024,768");
+            setChromeOptions.addArguments("--disable-gpu");
+            let driver = await new Builder()
+              .setChromeOptions(setChromeOptions)
+              .forBrowser("chrome")
+              .build();
+
+            await dp_scb_auto(driver, acc_type, agent_id, bank_id);
+          } else {
+            const setChromeOptions = new chrome.Options();
+            setChromeOptions.addArguments("--no-sandbox");
+            // setChromeOptions.addArguments('--headless');
+            setChromeOptions.addArguments("--hide-scrollbars");
+            setChromeOptions.addArguments("window-size=1280,1024");
+            setChromeOptions.addArguments("--disable-gpu");
+
+            const driver = await new Builder()
+              .setChromeOptions(setChromeOptions)
+              .forBrowser("chrome")
+              .build();
+
+            await wd_ttb_auto(driver, acc_type, agent_id, bank_id);
+          }
+          setTimeout(() => {
+            i = 0;
+            working = false;
+          }, 10000);
+          console.log("end working", working + new Date());
+        }
+        // working = false;
+        // }
+      } catch (err) {
+        console.log(err);
+        working = false;
+        console.log("catch end working", working);
+      }
+    },
+    null,
+    true
+  );
 };
 
-module.exports.main = async (request, response) => {
-  // new CronJob(
-  //   "0 */1 * * * *",
-  // async () => {
-  try {
-    // if (!working) {
-    //   working = true;
-
-    //----------get ip-----------//
-    // let ip = await fn.get_ip();
-    // let ip = "192.168.1.78"; //----deposit
-    let ip = "192.168.1.89"; //----withdraw
-    //--------------------------//
-
-    console.log("ip =>", ip);
-    let web_id = await model.getagentid(ip);
-    console.log("agent", web_id);
-    let acc_type = web_id[0].robot.account_type;
-    let bank_id = web_id[0].robot.bank_id;
-    let agent_id = web_id[0]._id;
-    console.log("acc_type =>", acc_type);
-    console.log("bank_id =>", bank_id);
-    console.log("agent_id =>", agent_id);
-    if (acc_type == "deposit") {
-      await dp_scb_auto(acc_type, agent_id);
-    } else {
-      await wd_ttb_auto(acc_type, agent_id, bank_id);
-    }
-    //   }
-    // working = false;
-    // }
-  } catch (err) {
-    console.log(err);
-    // working = false;
-  }
-  // },
-  //   null,
-  //   true
-  // );
-  // };
-};
-
-async function wd_ttb_auto(acc_type, agent_id) {
+async function wd_ttb_auto(driver, acc_type, agent_id) {
   try {
     console.log("Start wd");
     //-----------prepare data_wd------------//
@@ -86,36 +116,44 @@ async function wd_ttb_auto(acc_type, agent_id) {
     //   for all_job {
     let job = all_job[0];
     // }
-    //------------------update processing---------------//
-    let {
-      _id,
-      description,
-    } = job;
-    // await model.update_status_wd(_id,'processing',description);
-    const setChromeOptions = new chrome.Options();
-    setChromeOptions.addArguments("--no-sandbox");
-    // setChromeOptions.addArguments('--headless');
-    setChromeOptions.addArguments("--hide-scrollbars");
-    setChromeOptions.addArguments("window-size=1280,1024");
-    setChromeOptions.addArguments("--disable-gpu");
 
-    const driver = await new Builder()
-      .setChromeOptions(setChromeOptions)
-      .forBrowser("chrome")
-      .build();
+    //------------------update processing---------------//
+    let { _id, description } = job;
+    await model.update_status_wd(_id, "processing", description);
+
+    // const setChromeOptions = new chrome.Options();
+    // setChromeOptions.addArguments("--no-sandbox");
+    // // setChromeOptions.addArguments('--headless');
+    // setChromeOptions.addArguments("--hide-scrollbars");
+    // setChromeOptions.addArguments("window-size=1280,1024");
+    // setChromeOptions.addArguments("--disable-gpu");
+
+    // const driver = await new Builder()
+    //   .setChromeOptions(setChromeOptions)
+    //   .forBrowser("chrome")
+    //   .build();
+
     //-------Open web ttb-----------//
     await driver.get("https://www.ttbdirect.com/ttb/kdw1.39.1#_frmIBPreLogin");
     await driver.sleep(2000);
+    console.log("start Login...");
     await step_Login(driver, agent_bankacc_username, agent_bankacc_password);
+    console.log("start click abount me...");
     await step_clickabountme(driver);
-    // await step_del_firstcontact(driver);
+    console.log("start delete contact...");
+    await step_del_firstcontact(driver);
+    console.log("start add contact...");
     await step_add_contact(driver, job);
+    console.log("start tranfer...");
     await step_insert_tranfer_acc(driver);
+    console.log("start Logout...");
     await step_logout(driver);
     //-------------------update doc------------------//
     // await model.update_doc_wd();
   } catch (err) {
-    await fn_logout(driver);
+    console.log(err);
+    console.log("catch logout start...");
+    await step_logout(driver);
     console.log(err);
     response.send({ status: "400", message: "error", err }).end();
   }
@@ -182,14 +220,13 @@ async function wd_ttb_auto(acc_type, agent_id) {
         )
         .click();
       await driver.sleep(500);
-    } catch (err) {
-      throw err;
-    }
+    } catch {}
   }
 
   async function step_add_contact(driver, job) {
     try {
       //----------prepare data_wd----------//
+      console.log("   ...Prepare data_wd");
       let {
         memb_bank_account_name,
         memb_bank_nameen,
@@ -198,15 +235,18 @@ async function wd_ttb_auto(acc_type, agent_id) {
       console.log("memb_bank_account_name =>", memb_bank_account_name);
       console.log("memb_bank_nameen =>", memb_bank_nameen);
       //-------add favorites contact-------//
+      console.log("   ...click add contact");
       await driver
         .findElement(By.id("frmIBMyReceipentsHome_btnAddFavorites"))
         .click();
       await driver.sleep(500);
       //--------input name favorites----------//
+      console.log("   ...input name contact");
       await driver
         .findElement(By.id("frmIBMyReceipentsAddBankAccnt_tbxAddAccntNickName"))
         .sendKeys(memb_bank_account_name);
       //----------select bank------------//
+      console.log("   ...select bank");
       await driver.sleep(500);
       let lengthElems = await driver.executeScript(
         `return document.getElementById("frmIBMyReceipentsAddBankAccnt_comboBankName").length`
@@ -247,6 +287,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
         throw err;
       }
       //-----------add account number------------//
+      console.log("   ...input acc number");
       await driver
         .findElement(By.id("frmIBMyReceipentsAddBankAccnt_tbxAddAccntNumber"))
         .sendKeys(memb_bank_account_number);
@@ -261,6 +302,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
         .click();
       await driver.sleep(3000);
       //-------------OTP-------------//
+      console.log("   ...call OTP");
       let ref = await driver
         .wait(
           until.elementLocated(
@@ -284,6 +326,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
       console.log("OTP =>", OTP);
       await model.removeOTP(OTP[0]._id);
       //---------------Confirm OTP-------------//
+      console.log("   ...input OTP");
       await driver
         .findElement(By.id("frmIBMyReceipentsAddContactManually_txtotp"))
         .sendKeys(OTP[0].value);
@@ -294,11 +337,13 @@ async function wd_ttb_auto(acc_type, agent_id) {
         )
         .click();
       await driver.sleep(1000);
+      console.log("click transfer");
       await driver
         .findElement(
-          By.xpath(
-            "/html/body/div/div/form/div/div[2]/div/div/div/div/div[2]/div/div/div/div/div/div/div[11]/div/div/div/div/div/div/div/div/div/ul/li/div/div/div/div/div[4]/div/div/div/div"
-          )
+          // By.xpath(
+          //   "/html/body/div/div/form/div/div[2]/div/div/div/div/div[2]/div/div/div/div/div/div/div[11]/div/div/div/div/div/div/div/div/div/ul/li/div/div/div/div/div[4]/div/div/div/div"
+          // )
+          By.id("hbox1010001831107419_btnTransfer")
         )
         .click();
       await driver.sleep(1000);
@@ -310,13 +355,10 @@ async function wd_ttb_auto(acc_type, agent_id) {
   async function step_insert_tranfer_acc(driver, job) {
     try {
       //----------prepare data_wd----------//
-      let {
-        amount,
-        agent_id,
-        memb_bank_account_id,
-        description,
-      } = job;
+      console.log("   ...Prepare data_wd");
+      let { amount, agent_id, memb_bank_account_id, description } = job;
       //------click bank item0-------//
+      console.log("   ...click bank web");
       button = await driver.wait(
         until.elementLocated(By.xpath('//*[@id="item-0"]/table/tbody')),
         30000
@@ -324,13 +366,15 @@ async function wd_ttb_auto(acc_type, agent_id) {
       await button.click();
       await driver.sleep(1000);
       //-------click show contact----------//
+      console.log("   ...click show contact");
       newButton = await driver.wait(
         until.elementLocated(By.id("frmIBTranferLP_btnXferShowContact")),
         30000
       );
       await newButton.click();
-      //------click account await-------------//
-      driver.sleep(1000);
+      //------click account-------------//
+      console.log("   ...click account contact ");
+      await driver.sleep(1000);
       button = await driver.wait(
         until.elementLocated(
           By.xpath(
@@ -368,6 +412,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
       await button.click();
       await driver.sleep(3000);
       //----------OTP----------//
+      console.log("   ...call OTP");
       let ref = await driver
         .wait(
           until.elementLocated(
@@ -381,6 +426,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
       let OTP = await model.callOTP(ref);
       console.log("OTP =>", OTP);
       //---------------Confirm OTP-------------//
+      console.log("   ...comfirm OTP");
       await driver
         .findElement(By.id("frmIBTransferNowConfirmation_txtBxOTP"))
         .sendKeys(OTP);
@@ -390,6 +436,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
         .click();
       await driver.sleep(1000);
       //---------------get data-------------//
+      console.log("   ...get data");
       let balance = await driver
         .wait(
           until.elementLocated(By.id("frmIBTransferNowCompletion_lblBal")),
@@ -407,12 +454,18 @@ async function wd_ttb_auto(acc_type, agent_id) {
         .getText();
       console.log("acc =>", acc);
       //--------------update data_wd------------//
-      description.concat({username:"robot",note:"######",note_date:new Date(moment().format())})
-      let memname = await model.get_member_name(agent_id,memb_bank_account_id);
-      console.log('member name =>', memname)
+      console.log("   ...update data_wd");
+      description.concat({
+        username: "robot",
+        note: "######",
+        note_date: new Date(moment().format()),
+      });
+      let memname = await model.get_member_name(agent_id, memb_bank_account_id);
+      console.log("member name =>", memname);
       // await model.update_member_name();
       // await model.updatebalance(_id,balance);
       //---------------Task Screen-------------//
+      console.log("   ...task screen");
       // let base64 = await driver
       //   .wait(
       //     until.elementsLocated(By.id("frmIBTransferNowCompletion_vbxTransaction")),
@@ -429,6 +482,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
       });
       await driver.sleep(1000);
       //------------convert to base64------------//
+      console.log("   ...convert to base64");
       await imageToBase64(pathpic) // Path to the image
         .then((response) => {
           let img = "data:image/jpeg;base64," + response;
@@ -446,6 +500,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
   async function step_logout(driver) {
     try {
       //-----------Logout----------------//
+      await driver.sleep(1000);
       await driver.findElement(By.id("hbxIBPostLogin_lnkLogOut")).click();
       await driver.sleep(1000);
       await driver.close();
@@ -499,7 +554,7 @@ async function wd_ttb_auto(acc_type, agent_id) {
   // }
 }
 
-async function dp_scb_auto(acc_type, agent_id) {
+async function dp_scb_auto(driver, acc_type, agent_id) {
   try {
     function split_word(word) {
       let var_array, channel, from_acc, from_acc_name, from_bank_id;
@@ -537,20 +592,8 @@ async function dp_scb_auto(acc_type, agent_id) {
       return { channel, from_acc, from_acc_name, from_bank_id };
     }
 
-    async function main(acc_type, agent_id) {
+    async function main(driver, acc_type, agent_id) {
       try {
-        let setChromeOptions = new chrome.Options();
-        //setChromeOptions.addArguments('--headless');
-        setChromeOptions.addArguments("--no-sandbox");
-        setChromeOptions.addArguments("--hide-scrollbars");
-        setChromeOptions.addArguments("window-size=1024,768");
-        setChromeOptions.addArguments("--disable-gpu");
-        let driver = await new Builder()
-          .setChromeOptions(setChromeOptions)
-          .forBrowser("chrome")
-          .build();
-        // let ip = "192.168.1.78";
-        // let agent_id_ = await model.getagentid(ip);
         let account_id_ = await model.getcof_acct(acc_type, agent_id);
         console.log("account_id", account_id_);
         let robot = account_id_[0];
@@ -698,7 +741,7 @@ async function dp_scb_auto(acc_type, agent_id) {
         throw err;
       }
     }
-    main(acc_type, agent_id);
+    main(driver, acc_type, agent_id);
   } catch (err) {
     console.log(err);
     response.send({ status: "400", message: "error", err }).end();

@@ -36,8 +36,8 @@ module.exports = async () => {
 
           //----------get ip-----------//
           // let ip = await fn.get_ip();
-          // let ip = "192.168.1.78"; //----deposit
-          let ip = "192.168.1.89"; //----withdraw
+          let ip = "192.168.1.78"; //----deposit
+          // let ip = "192.168.1.89"; //----withdraw
           //--------------------------//
 
           console.log("ip =>", ip);
@@ -669,7 +669,8 @@ async function dp_scb_auto(driver, acc_type, agent_id) {
       from_bank_id = from_bank_id.replace(/\(/g, "");
       from_bank_id = from_bank_id.replace(/\)/g, "");
       from_bank_id = from_bank_id.trim().toLowerCase();
-      from_acc = from_acc.match(/(\d+)(((.|,)\d+)+)?/g);
+      let from_acc_arr = from_acc.match(/(\d+)(((.|,)\d+)+)?/g);
+      from_acc = from_acc_arr[0]
       return { channel, from_acc, from_acc_name, from_bank_id };
     }
 

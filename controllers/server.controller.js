@@ -42,7 +42,6 @@ module.exports = async () => {
 
           console.log("ip =>", ip);
           let web_id = await model.getagentid(ip);
-          console.log("agent", web_id);
           let acc_type = web_id[0].robot.account_type;
           let bank_id = web_id[0].robot.bank_id;
           let agent_id = web_id[0]._id;
@@ -73,9 +72,6 @@ module.exports = async () => {
               agnet_bankacc_id
             );
             console.log("all_job =>", all_job);
-
-            // let job = all_job[0];
-            // console.log("job =>", job);
 
             if (Object.keys(all_job).length !== 0) {
               const setChromeOptions = new chrome.Options();
@@ -405,7 +401,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       //----------prepare data_wd----------//
       console.log("   ...Prepare data_wd");
       console.log("job =>", job);
-      let { _id, amount, agent_id, memb_id, description } = job;
+      let { _id, amount, agent_id, memb_id, description,from_bank_id } = job;
 
       //------click bank item0-------//
       console.log("   ...click bank web");
@@ -591,7 +587,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
         await model.update_member_name(arr_memname[0]._id, nameonbank, desmem);
         boo = true;
       }
-      await model.updatebalance(_id, balance);
+      await model.updatebalance(from_bank_id, balance);
       silp_date = timetransfer;
       description = description.concat({
         username: "system",
@@ -636,49 +632,6 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
     }
   }
 
-  // async function findOTP(request, response) {
-  //   try {
-  //     console.log("request => ", request.Ref);
-  //     let result = await model.callOTP(request.Ref).catch(() => {
-  //       throw err;
-  //     });
-  //     console.log("result => ", result);
-  //     if (result.length !== 0) {
-  //       console.log(result[0].value);
-  //       let remove = await model.removeOTP(result[0]._id).catch(() => {
-  //         throw err;
-  //       });
-  //       return result[0].value;
-  //     } else {
-  //       console.log(result[0]);
-  //       response
-  //         .send({
-  //           status: "300",
-  //           message: "con not find Ref.ID",
-  //           result: result[0],
-  //         })
-  //         .end();
-  //     }
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // }
-
-  // async function remove(request, response) {
-  //   try {
-  //     console.log(request.body);
-  //     let remove = await model.removeOTP(result[0]._id).catch(() => {
-  //       throw err;
-  //     });
-  //     console.log(result[0]);
-  //     response
-  //       .send({ status: "200", message: "success", result: result[0] })
-  //       .end();
-  //   } catch (err) {
-  //     console.log(err);
-  //     response.send({ status: "400", message: "error", err }).end();
-  //   }
-  // }
 }
 
 async function dp_scb_auto(driver, acc_type, agent_id) {

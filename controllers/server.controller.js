@@ -36,8 +36,8 @@ module.exports = async () => {
 
           //----------get ip-----------//
           // let ip = await fn.get_ip();
-          let ip = "192.168.1.78"; //----deposit
-          // let ip = "192.168.1.89"; //----withdraw
+          // let ip = "192.168.1.78"; //----deposit
+          let ip = "192.168.1.89"; //----withdraw
           //--------------------------//
 
           console.log("ip =>", ip);
@@ -361,9 +361,14 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       console.log("ref =>", ref);
       console.log("mob =>", mob);
       await driver.sleep(5000);
-      let OTP = await model.callOTP(ref);
-      if (OTP.length == 0) {
-        throw "ไม่พบเลขข้อมูล OTP ในระบบ";
+      let OTP;
+      try {
+        OTP = await model.callOTP(ref);
+      } catch {
+        OTP = await model.callOTP(ref);
+        if (OTP.length == 0) {
+          throw "ไม่พบเลขข้อมูล OTP ในระบบ";
+        }
       }
       console.log("OTP =>", OTP[0].value);
       await driver.sleep(500);
@@ -391,7 +396,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
         .click();
       await driver.sleep(1000);
     } catch (err) {
-      console.log("****   ...catch step_add_contact");
+      console.log("****   ...catch step_add_contact",err);
       throw err;
     }
   }
@@ -401,7 +406,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       //----------prepare data_wd----------//
       console.log("   ...Prepare data_wd");
       console.log("job =>", job);
-      let { _id, amount, agent_id, memb_id, description,from_bank_id } = job;
+      let { _id, amount, agent_id, memb_id, description, from_bank_id } = job;
 
       //------click bank item0-------//
       console.log("   ...click bank web");
@@ -469,7 +474,15 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
         .getText();
       console.log("ref =>", ref);
       await driver.sleep(5000);
-      let OTP = await model.callOTP(ref);
+      let OTP
+      try{
+        OTP = await model.callOTP(ref);
+      } catch {
+        OTP = await model.callOTP(ref);
+        if (OTP.length == 0) {
+          throw "ไม่พบเลขข้อมูล OTP ในระบบ";
+        }
+      }
       console.log("OTP =>", OTP[0]);
       await model.removeOTP(OTP[0]._id);
       //---------------Confirm OTP-------------//
@@ -614,7 +627,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await model.update_doc_wd(_id, silp_date, silp_image);
       await driver.sleep(500);
     } catch (err) {
-      console.log("****   ...catch step_insert_tranfer_acc");
+      console.log("****   ...catch step_insert_tranfer_acc",err);
       throw err;
     }
   }
@@ -627,11 +640,10 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await driver.sleep(1000);
       await driver.close();
     } catch (err) {
-      console.log("****   ...catch step_logout");
+      console.log("****   ...catch step_logout",err);
       throw err;
     }
   }
-
 }
 
 async function dp_scb_auto(driver, acc_type, agent_id) {
@@ -670,7 +682,7 @@ async function dp_scb_auto(driver, acc_type, agent_id) {
       from_bank_id = from_bank_id.replace(/\)/g, "");
       from_bank_id = from_bank_id.trim().toLowerCase();
       let from_acc_arr = from_acc.match(/(\d+)(((.|,)\d+)+)?/g);
-      from_acc = from_acc_arr[0]
+      from_acc = from_acc_arr[0];
       return { channel, from_acc, from_acc_name, from_bank_id };
     }
 

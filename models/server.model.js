@@ -187,7 +187,7 @@ module.exports.updatebalance = (_id, balance) => {
 
 module.exports.update_member_name = (_id, new_account_name, description) => {
   return new Promise(async (resolve, reject) => {
-    await MongoDB.collection("agent_bank_account")
+    await MongoDB.collection("memb_bank_account")
       .updateOne(
         { _id: ObjectId(_id) },
         {
@@ -222,6 +222,7 @@ module.exports.get_member_name = (agent_id, memb_id) => {
           $project: {
             id: 1,
             account_name: "$account_name",
+            description: "$description",
           },
         },
       ])
@@ -245,7 +246,7 @@ module.exports.update_status_wd = (_id, status, description) => {
             upd_prog: "robot",
           },
         },
-        { upsert: true }
+        // { upsert: true }
       )
       .then((result) => resolve(result))
       .catch((error) => reject(error));
@@ -295,6 +296,7 @@ module.exports.get_job_doc_wd = (agent_id, robot_accountid) => {
               description: "$description",
               from_bank_id: "$from_bank_id",
               from_account_id: "$from_account_id",
+              memb_id: "$memb_id",
               memb_bank_id: "$to_bank_id",
               memb_bank_account_id: "$to_account_id",
               amount: "$amount",
@@ -318,6 +320,7 @@ module.exports.get_job_doc_wd = (agent_id, robot_accountid) => {
               description: "$description",
               from_bank_id: "$from_bank_id",
               from_account_id: "$from_account_id",
+              memb_id: "$memb_id",
               memb_bank_id: "$memb_bank_id",
               memb_bank_nameen: "$bank_memb.nameen",
               memb_bank_account_id: "$memb_bank_account_id",
@@ -342,6 +345,7 @@ module.exports.get_job_doc_wd = (agent_id, robot_accountid) => {
               description: "$description",
               from_bank_id: "$from_bank_id",
               from_account_id: "$from_account_id",
+              memb_id: "$memb_id",
               memb_bank_id: "$memb_bank_id",
               memb_bank_nameen: "$memb_bank_nameen",
               memb_bank_account_id: "$memb_bank_account_id",

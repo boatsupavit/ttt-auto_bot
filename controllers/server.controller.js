@@ -129,8 +129,8 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
     let agent_bank_id = robot.bank_id;
 
     //------------------update processing---------------//
-    let { _id, description } = job;
-    await model.update_status_wd(_id, "processing", description);
+    // let { _id, description } = job;
+    // await model.update_status_wd(_id, "processing", description);
 
     //-------Open web ttb-----------//
     await driver.get("https://www.ttbdirect.com/ttb/kdw1.39.1#_frmIBPreLogin");
@@ -162,7 +162,9 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       note_date: new Date(moment().format()),
     });
     console.log(description);
+    // if(description.note.test(/ไม่สามารถทำรายการถอนได้/g)){
     await model.update_status_wd(_id, "cancel", description);
+    // }
     try {
       await step_logout(driver);
     } catch (err) {

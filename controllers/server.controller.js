@@ -669,6 +669,7 @@ async function dp_scb_auto(driver, acc_type, agent_id) {
       from_bank_id = from_bank_id.replace(/\(/g, "");
       from_bank_id = from_bank_id.replace(/\)/g, "");
       from_bank_id = from_bank_id.trim().toLowerCase();
+      from_acc = from_acc.match(/(\d+)(((.|,)\d+)+)?/g);
       return { channel, from_acc, from_acc_name, from_bank_id };
     }
 

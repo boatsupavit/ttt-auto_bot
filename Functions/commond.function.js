@@ -60,7 +60,7 @@ exports.checkalertweb = function (driver) {
               resolve(true);
             } else {
               await driver.switchTo().alert().accept();
-              resolve(true);
+              resolve(checktext);
             }
           },
           async function () {

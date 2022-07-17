@@ -159,8 +159,8 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       note_date: new Date(moment().format()),
     });
     console.log("description =>", description);
-    let last_note = description[Number(description.length)-1].note
-    console.log('last_arr =>', last_note);
+    let last_note = description[Number(description.length) - 1].note;
+    console.log("last_arr =>", last_note);
     await model.update_status_wd(_id, "cancel", description);
     try {
       await step_logout(driver);
@@ -900,9 +900,19 @@ async function dp_scb_auto(driver, acc_type, agent_id) {
           }
         }
         await driver.sleep(500);
+        await driver.findElement(By.id("Logout_LinkButton")).click();
+        let thankyou = await driver.wait(
+          until.elementLocated(By.className("bg-thankyou"))
+        );
+        console.log("Thankyou Screen by normal", thankyou);
         await driver.close();
       } catch (err) {
         await driver.sleep(500);
+        await driver.findElement(By.id("Logout_LinkButton")).click();
+        let thankyou = await driver.wait(
+          until.elementLocated(By.className("bg-thankyou"))
+        );
+        console.log("Thankyou Screen by normal", thankyou);
         await driver.close();
         throw err;
       }

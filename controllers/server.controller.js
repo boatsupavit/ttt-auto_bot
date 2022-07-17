@@ -125,8 +125,8 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
     let agent_bank_id = robot.bank_id;
 
     //------------------update processing---------------//
-    // let { _id, description } = job;
-    // await model.update_status_wd(_id, "processing", description);
+    let { _id, description } = job;
+    await model.update_status_wd(_id, "processing", description);
 
     //-------Open web ttb-----------//
     await driver.get("https://www.ttbdirect.com/ttb/kdw1.39.1#_frmIBPreLogin");
@@ -151,16 +151,15 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
     await step_logout(driver);
   } catch (err) {
     console.log("catch logout start...");
+    //-----------update status cancel-----------//
     let { _id, description } = job;
     description = description.concat({
       username: "system",
       note: err,
       note_date: new Date(moment().format()),
     });
-    console.log(description);
-    // if(description.note.test(/ไม่สามารถทำรายการถอนได้/g)){
+    console.log("description =>", description);
     await model.update_status_wd(_id, "cancel", description);
-    // }
     try {
       await step_logout(driver);
     } catch (err) {
@@ -170,27 +169,32 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
   }
 
   async function step_Login(
+    
     driver,
     agent_bankacc_username,
     agent_bankacc_password
   ) {
     try {
       //--------click eng----------//
+      console.log("   ...click eng");
       await driver
         .wait(until.elementLocated(By.id("hbxIBPreLogin_btnEng")), 3000)
         .click();
       await driver.sleep(1000);
       //---------input username & password & click login-------------//
+      console.log("   ...input username");
       await driver
         .findElement(By.id("frmIBPreLogin_txtUserId"))
         .sendKeys(agent_bankacc_username);
+      console.log("   ...input password");
       await driver
         .findElement(By.id("frmIBPreLogin_txtPassword"))
         .sendKeys(agent_bankacc_password);
       await driver.findElement(By.id("frmIBPreLogin_btnLogIn")).click();
       await driver.sleep(4000);
+      console.log("   ...click login");
     } catch (err) {
-      console.log("****   ...step_Login");
+      console.log("****   ...step_Login", err);
       throw err;
     }
   }
@@ -198,10 +202,12 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
   async function step_clickabountme(driver) {
     try {
       //----------click aboutme & favorites menu------------//
+      console.log("   ...click aboutme");
       await driver
         .findElement(By.id("frmIBPostLoginDashboard_btnMenuAboutMe"))
         .click();
       await driver.sleep(1000);
+      console.log("   ...click favorites menu");
       await driver
         .findElement(
           By.xpath('//*[@id="frmIBPostLoginDashboard_segMenuOptions"]/ul/li[3]')
@@ -209,7 +215,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
         .click();
       await driver.sleep(1000);
     } catch (err) {
-      console.log("****   ...catch step_clickabountme");
+      console.log("****   ...catch step_clickabountme", err);
       throw err;
     }
   }
@@ -307,33 +313,44 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await driver
         .findElement(By.id("frmIBMyReceipentsAddBankAccnt_btnAddAccntNext"))
         .click();
-      await driver.sleep(1000);
-      await fn.checkalertweb(driver);
+      await driver.sleep(2000);
       console.log("check alert.....");
-      await driver
-        .switchTo()
-        .alert()
-        .then(
-          async function () {
-            let checktext = await driver.switchTo().alert().getText();
-            console.log("check text alert : ", checktext);
-            if (
-              checktext.match(/account/g) ||
-              checktext.match(/incorrect/g) ||
-              checktext.match(/INACTIVE/g)
-            ) {
-              await driver.switchTo().alert().accept();
-              throw (
-                "เลขบัญชี " +
-                memb_bank_account_number +
-                " ไม่ถูกต้อง ไม่สามารถทำรายการถอนได้"
-              );
-            }
-          },
-          async function () {
-            console.log("No Alert Account number");
+      let textalert = await fn.checkalertweb(driver);
+      if (textalert != "" || textalert != null) {
+        console.log("alert =>", textalert);
+        // await driver
+        //   .switchTo()
+        //   .alert()
+        //   .then(async function () {
+        //     let checktext = await driver.switchTo().alert().getText();
+        //     console.log("check text alert : ", checktext);
+        let account = textalert.includes("account");
+        console.log("boo_account", account);
+        let incorrect = textalert.includes("incorrect");
+        console.log("boo_incorrect", incorrect);
+        let INACTIVE = textalert.includes("INACTIVE");
+        console.log("boo_INACTIVE", INACTIVE);
+        if (account === true || incorrect === true || INACTIVE === true) {
+          try {
+            let a = await driver
+              .switchTo()
+              .alert()
+              .accept()
+              .catch(() => {
+                throw err;
+              });
+          } catch {
+            console.log("No alert accept");
           }
-        );
+          throw (
+            "เลขบัญชี " +
+            memb_bank_account_number +
+            " ไม่ถูกต้อง ไม่สามารถทำรายการถอนได้"
+          );
+        }
+      } else {
+        console.log("No Alert");
+      }
       await driver
         .findElement(
           By.id("frmIBMyReceipentsAddContactManually_btnAddAccntNext")
@@ -396,7 +413,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
         .click();
       await driver.sleep(1000);
     } catch (err) {
-      console.log("****   ...catch step_add_contact",err);
+      console.log("****   ...catch step_add_contact", err);
       throw err;
     }
   }
@@ -449,6 +466,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
         30000
       );
       await button.click();
+      console.log("   ...click Next");
       await driver.sleep(1000);
       button = await driver.wait(
         until.elementLocated(By.id("frmIBTranferLP_btnXferNext")),
@@ -474,8 +492,8 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
         .getText();
       console.log("ref =>", ref);
       await driver.sleep(5000);
-      let OTP
-      try{
+      let OTP;
+      try {
         OTP = await model.callOTP(ref);
       } catch {
         OTP = await model.callOTP(ref);
@@ -627,7 +645,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await model.update_doc_wd(_id, silp_date, silp_image);
       await driver.sleep(500);
     } catch (err) {
-      console.log("****   ...catch step_insert_tranfer_acc",err);
+      console.log("****   ...catch step_insert_tranfer_acc", err);
       throw err;
     }
   }
@@ -640,7 +658,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await driver.sleep(1000);
       await driver.close();
     } catch (err) {
-      console.log("****   ...catch step_logout",err);
+      console.log("****   ...catch step_logout", err);
       throw err;
     }
   }

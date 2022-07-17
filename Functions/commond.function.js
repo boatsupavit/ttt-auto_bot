@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const { promise } = require("selenium-webdriver");
 var exports = (module.exports = {});
 const model = require("../models/server.model.js");
 

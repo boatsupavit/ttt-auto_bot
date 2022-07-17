@@ -76,7 +76,7 @@ module.exports = async () => {
             if (Object.keys(all_job).length !== 0) {
               const setChromeOptions = new chrome.Options();
               setChromeOptions.addArguments("--no-sandbox");
-              // setChromeOptions.addArguments('--headless');
+              setChromeOptions.addArguments("--headless");
               setChromeOptions.addArguments("--hide-scrollbars");
               setChromeOptions.addArguments("window-size=1280,1024");
               setChromeOptions.addArguments("--disable-gpu");
@@ -159,6 +159,8 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       note_date: new Date(moment().format()),
     });
     console.log("description =>", description);
+    let last_note = description[Number(description.length)-1].note
+    console.log('last_arr =>', last_note);
     await model.update_status_wd(_id, "cancel", description);
     try {
       await step_logout(driver);
@@ -169,7 +171,6 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
   }
 
   async function step_Login(
-    
     driver,
     agent_bankacc_username,
     agent_bankacc_password
@@ -190,6 +191,27 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await driver
         .findElement(By.id("frmIBPreLogin_txtPassword"))
         .sendKeys(agent_bankacc_password);
+      console.log("check alert.....");
+      let textalert = await fn.checkalertweb(driver);
+      if (textalert !== "" && textalert !== true) {
+        console.log("alert =>", textalert);
+        if (textalert.includes("already logged") === true) {
+          try {
+            await driver
+              .switchTo()
+              .alert()
+              .accept()
+              .catch(() => {
+                throw err;
+              });
+          } catch {
+            console.log("No alert accept");
+          }
+          throw "ไม่สามารถ Login ได้เนื่องจากระบบธนาคารช้า กรุณารอสักครู่กำลังดำเนินการถอนใหม่อีกครั้ง";
+        }
+      } else {
+        console.log("No Alert login");
+      }
       await driver.findElement(By.id("frmIBPreLogin_btnLogIn")).click();
       await driver.sleep(4000);
       console.log("   ...click login");
@@ -203,6 +225,27 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
     try {
       //----------click aboutme & favorites menu------------//
       console.log("   ...click aboutme");
+      console.log("check alert.....");
+      let textalert = await fn.checkalertweb(driver);
+      if (textalert !== "" && textalert !== true) {
+        console.log("alert =>", textalert);
+        if (textalert.includes("already logged") === true) {
+          try {
+            await driver
+              .switchTo()
+              .alert()
+              .accept()
+              .catch(() => {
+                throw err;
+              });
+          } catch {
+            console.log("No alert accept");
+          }
+          throw "ไม่สามารถดำเนินการถอนได้เนื่องจากระบบธนาคารช้า กรุณารอ 10 นาทีเพื่อดำเนินการถอนใหม่อีกครั้ง";
+        }
+      } else {
+        console.log("No Alert login");
+      }
       await driver
         .findElement(By.id("frmIBPostLoginDashboard_btnMenuAboutMe"))
         .click();
@@ -316,7 +359,7 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await driver.sleep(2000);
       console.log("check alert.....");
       let textalert = await fn.checkalertweb(driver);
-      if (textalert != "" || textalert != null) {
+      if (textalert !== "" && textalert !== true) {
         console.log("alert =>", textalert);
         // await driver
         //   .switchTo()
@@ -324,15 +367,19 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
         //   .then(async function () {
         //     let checktext = await driver.switchTo().alert().getText();
         //     console.log("check text alert : ", checktext);
-        let account = textalert.includes("account");
-        console.log("boo_account", account);
-        let incorrect = textalert.includes("incorrect");
-        console.log("boo_incorrect", incorrect);
-        let INACTIVE = textalert.includes("INACTIVE");
-        console.log("boo_INACTIVE", INACTIVE);
-        if (account === true || incorrect === true || INACTIVE === true) {
+        // let account = textalert.includes("account");
+        // console.log("boo_account", account);
+        // let incorrect = textalert.includes("incorrect");
+        // console.log("boo_incorrect", incorrect);
+        // let INACTIVE = textalert.includes("INACTIVE");
+        // console.log("boo_INACTIVE", INACTIVE);
+        if (
+          textalert.includes("account") === true ||
+          textalert.includes("incorrect") === true ||
+          textalert.includes("INACTIVE") === true
+        ) {
           try {
-            let a = await driver
+            await driver
               .switchTo()
               .alert()
               .accept()
@@ -380,14 +427,18 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await driver.sleep(5000);
       let OTP;
       try {
+        console.log("OTP_1");
         OTP = await model.callOTP(ref);
       } catch {
+        console.log("OTP_2");
+        await driver.sleep(3000);
         OTP = await model.callOTP(ref);
-        if (OTP.length == 0) {
-          throw "ไม่พบเลขข้อมูล OTP ในระบบ";
-        }
       }
-      console.log("OTP =>", OTP[0].value);
+      if (OTP.length == 0) {
+        throw "ไม่พบเลขข้อมูล OTP ในระบบ";
+      }
+      console.log("OTP =>", OTP);
+      console.log("OTP =>", OTP);
       await driver.sleep(500);
       await model.removeOTP(OTP[0]._id);
       //---------------Confirm OTP-------------//
@@ -494,14 +545,17 @@ async function wd_ttb_auto(driver, acc_type, agent_id, job) {
       await driver.sleep(5000);
       let OTP;
       try {
+        console.log("OTP_1");
         OTP = await model.callOTP(ref);
       } catch {
+        console.log("OTP_2");
+        await driver.sleep(3000);
         OTP = await model.callOTP(ref);
-        if (OTP.length == 0) {
-          throw "ไม่พบเลขข้อมูล OTP ในระบบ";
-        }
       }
-      console.log("OTP =>", OTP[0]);
+      if (OTP.length == 0) {
+        throw "ไม่พบเลขข้อมูล OTP ในระบบ";
+      }
+      console.log("OTP =>", OTP);
       await model.removeOTP(OTP[0]._id);
       //---------------Confirm OTP-------------//
       console.log("   ...comfirm OTP");

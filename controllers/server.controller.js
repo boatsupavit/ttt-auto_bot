@@ -42,7 +42,6 @@ module.exports = async () => {
           let ip = "192.168.1.89"; //----withdraw
           //--------------------------//
 
-
           console.log("ip =>", ip);
           let web_id = await model.getagentid(ip);
           let acc_type = web_id[0].robot.account_type;
@@ -66,57 +65,62 @@ module.exports = async () => {
             await SCB_DP.dp_scb_auto(driver, acc_type, agent_id, bank_id);
           } else {
             let account_id = await model.getcof_acct(acc_type, agent_id);
-            let robot = account_id[0];
-            let agnet_bankacc_id = robot._id;
-            console.log("agnet_bankacc_id =>", agnet_bankacc_id);
+            console.log("acc_id is not empty => ", Boolean(account_id.length !== 0));
+            if (account_id.length !== 0) {
+              let robot = account_id[0];
+              let agnet_bankacc_id = robot._id;
+              console.log("agnet_bankacc_id =>", agnet_bankacc_id);
 
-            let all_job = await model.get_job_doc_wd(
-              agent_id,
-              agnet_bankacc_id
-            );
-            console.log("all_job =>", all_job);
-
-            if (Object.keys(all_job).length !== 0) {
-              const setChromeOptions = new chrome.Options();
-              setChromeOptions.addArguments("--no-sandbox");
-              // setChromeOptions.addArguments("--headless");
-              setChromeOptions.addArguments("--hide-scrollbars");
-              setChromeOptions.addArguments("window-size=1280,1024");
-              setChromeOptions.addArguments("--disable-gpu");
-
-              const driver = await new Builder()
-                .setChromeOptions(setChromeOptions)
-                .forBrowser("chrome")
-                .build();
-
-              // let job = all_job[0];
-              // console.log("job =>", job);
-
-              console.log(
-                "---------------------START-AUOT-WITHDRAW--------------------"
+              let all_job = await model.get_job_doc_wd(
+                agent_id,
+                agnet_bankacc_id
               );
-              await TTB_WD.wd_ttb_auto(driver, acc_type, agent_id);
-            } 
-            else {
-              working = false
-              console.log('working ',working)
+              console.log("all_job =>", all_job);
+
+              if (Object.keys(all_job).length !== 0) {
+                const setChromeOptions = new chrome.Options();
+                setChromeOptions.addArguments("--no-sandbox");
+                // setChromeOptions.addArguments("--headless");
+                setChromeOptions.addArguments("--hide-scrollbars");
+                setChromeOptions.addArguments("window-size=1280,1024");
+                setChromeOptions.addArguments("--disable-gpu");
+
+                const driver = await new Builder()
+                  .setChromeOptions(setChromeOptions)
+                  .forBrowser("chrome")
+                  .build();
+
+                // let job = all_job[0];
+                // console.log("job =>", job);
+
+                console.log(
+                  "---------------------START-AUOT-WITHDRAW--------------------"
+                );
+                await TTB_WD.wd_ttb_auto(driver, acc_type, agent_id);
+              } else {
+                working = false;
+                console.log("working ", working);
+              }
+            } else {
+              throw ("ไม่พบบัญชีของเว็บที่จะใช้ดำเนินการถอน กรุณาตรวจสอบ")
             }
           }
-          // setTimeout(() => {
-          //   i = 0;
-          //   working = false;
-          // }, 10000);
-          // console.log("end working", working + new Date());
         }
       } catch (err) {
-        console.log('main catch =>',err);
+        console.log("main catch =>", err);
         // working = false;
-        console.log("----------------waiting 2 min for timeout", working +' '+ new Date());
+        console.log(
+          "----------------waiting 2 min for timeout",
+          working + " " + new Date()
+        );
         setTimeout(() => {
-            i = 0;
-            console.log("----------------end 2 min for timeout", working +' '+ new Date());
-            working = false;
-          }, 120000);
+          i = 0;
+          console.log(
+            "----------------end 2 min for timeout",
+            working + " " + new Date()
+          );
+          working = false;
+        }, 120000);
         console.log("----------------catch end working", working);
       }
     },
@@ -145,7 +149,7 @@ module.exports = async () => {
 //       console.log("start Login...");
 //       await step_Login(driver, agent_bankacc_username, agent_bankacc_password);
 //     } catch {
-//       throw 
+//       throw
 //     }
 //     let i = 0;
 //     console.log("set i =", i);

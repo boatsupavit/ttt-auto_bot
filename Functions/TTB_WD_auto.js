@@ -86,6 +86,7 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
         await driver.sleep(500);
 
         if (Object.keys(all_job).length !== 0) {
+          i = 0;
           for (let j = 0; j < Object.keys(all_job).length; j++) {
             let job = all_job[j];
             console.log("job =>", job);
@@ -94,15 +95,52 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
               let { _id, description } = job;
               await model.update_status_wd(_id, "processing", description);
 
-              console.log("   ...click home");
-              await driver
-                .wait(
-                  until.elementLocated(By.id("hbxIBPostLogin_lnkHome")),
-                  3000
-                )
-                .click();
-              await driver.sleep(500);
+              try {
+                console.log("   ...click home");
+                await driver
+                  .wait(
+                    until.elementLocated(By.id("hbxIBPostLogin_lnkHome")),
+                    3000
+                  )
+                  .click();
+                await driver.sleep(500);
 
+                console.log("check alert.....");
+                let textalert = await fn.checkalertweb(driver);
+                if (textalert !== "" && textalert !== true) {
+                  console.log("alert =>", textalert);
+                  if (
+                    textalert.includes("services are not available") === true ||
+                    textalert.includes("Service is temporarily unavailable") ===
+                      true ||
+                    textalert.includes("unavailable") === true
+                  ) {
+                    try {
+                      await driver
+                        .switchTo()
+                        .alert()
+                        .accept()
+                        .catch(() => {
+                          throw err;
+                        });
+                    } catch {
+                      console.log("No alert accept");
+                    }
+                    throw "ไม่สามารถดำเนินรายการถอนได้เนื่องจากระบบธนาคารอยู่ในระหว่างการปิดปรับปรุง";
+                  }
+                } else {
+                  console.log("No Alert");
+                }
+              } catch {
+                console.log("   ...click home");
+                await driver
+                  .wait(
+                    until.elementLocated(By.id("hbxIBPostLogin_lnkHome")),
+                    3000
+                  )
+                  .click();
+                await driver.sleep(500);
+              }
               console.log("start click abount me...");
               await step_clickabountme(driver);
 
@@ -126,13 +164,43 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
               console.log("description =>", description);
               let last_note = description[Number(description.length) - 1].note;
               console.log("last_arr =>", last_note);
-              if (
-                last_note.includes("กำลังดำเนินการถอนใหม่อีกครั้ง") === true
-              ) {
-                await model.update_status_wd(_id, "approve", description);
-                j = j - 1;
-              } else {
+              try {
+                if (
+                  last_note.includes("กำลังดำเนินการถอนใหม่อีกครั้ง") === true
+                ) {
+                  await model.update_status_wd(_id, "approve", description);
+                  j = j - 1;
+                } else {
+                  await model.update_status_wd(_id, "failed", description);
+                }
+              } catch (err) {
+                console.log("   ...takeScreenshot");
+                let err_img = `./img/${new Date().getTime()}.png`;
+                console.log("err_img =>", err_img);
+                await driver.takeScreenshot().then(function (img, err) {
+                  require("fs").writeFile(
+                    err_img,
+                    img,
+                    "base64",
+                    function (err) {
+                      console.log("err", err);
+                    }
+                  );
+                });
+                await driver.sleep(1000);
+                console.log("   ...convert to base64");
+                await imageToBase64(err_img) // Path to the image
+                  .then((response) => {
+                    let img = "data:image/jpeg;base64," + response;
+                    // console.log("imgtobase64 => ", img); // "cGF0aC90by9maWxlLmpwZw=="
+                    err_img = img;
+                  })
+                  .catch((error) => {
+                    console.log("err => ", error); // Logs an error if there was one
+                  });
+                console.log(err);
                 await model.update_status_wd(_id, "failed", description);
+                await model.update_err_msg_wd(_id, err, err_img);
               }
             }
           }
@@ -146,13 +214,21 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
       await step_logout(driver);
     } catch (err) {
       console.log("wd_ttb_auto catch => ", err);
-      if (err.includes("end loop") === true) {
-        console.log(
-          "---------------------END-AUTO-WITHDRAW--------------------"
-        );
-        reject("END AUTO WITHDRAW");
+      try {
+        if (err.includes("end loop") === true) {
+          console.log(
+            "---------------------END-AUTO-WITHDRAW--------------------"
+          );
+          reject("END AUTO WITHDRAW");
+        }
+        console.log("start Logout...");
+        await step_logout(driver);
+        reject(err);
+      } catch (err) {
+        console.log("start Logout...");
+        await step_logout(driver);
+        reject(err);
       }
-      reject(err);
     }
   });
 
@@ -480,16 +556,18 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
       console.log("mob =>", mob);
       await driver.sleep(5000);
       let OTP;
-      try {
-        console.log("OTP_1");
+      for (let k = 0; k < 5; k++) {
+        console.log("OTP_", k);
         OTP = await model.callOTP(ref);
-      } catch {
-        console.log("OTP_2");
-        await driver.sleep(3000);
-        OTP = await model.callOTP(ref);
+        await driver.sleep(500);
+        if (OTP.length == 0) {
+          await driver.sleep(3000);
+        } else {
+          break;
+        }
       }
       if (OTP.length == 0) {
-        throw "ไม่พบเลขข้อมูล OTP ในระบบ กำลังดำเนินการถอนใหม่อีกครั้ง";
+        throw "ไม่พบเลขข้อมูล OTP ในระบบ";
       }
       console.log("OTP =>", OTP[0].value);
       await driver.sleep(500);
@@ -640,18 +718,21 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
       console.log("ref =>", ref);
       await driver.sleep(5000);
       let OTP;
-      try {
-        console.log("OTP_1");
+      for (let k = 0; k < 5; k++) {
+        console.log("OTP_", k);
         OTP = await model.callOTP(ref);
-      } catch {
-        console.log("OTP_2");
-        await driver.sleep(3000);
-        OTP = await model.callOTP(ref);
+        await driver.sleep(500);
+        if (OTP.length == 0) {
+          await driver.sleep(3000);
+        } else {
+          break;
+        }
       }
       if (OTP.length == 0) {
-        throw "ไม่พบเลขข้อมูล OTP ในระบบ กำลังดำเนินการถอนใหม่อีกครั้ง";
+        throw "ไม่พบเลขข้อมูล OTP ในระบบ";
       }
       console.log("OTP =>", OTP[0].value);
+      await driver.sleep(500);
       await model.removeOTP(OTP[0]._id);
       //---------------Confirm OTP-------------//
       console.log("   ...comfirm OTP");

@@ -253,6 +253,29 @@ module.exports.update_status_wd = (_id, status, description) => {
   });
 };
 
+module.exports.update_err_msg_wd = (_id, err_msg, err_img) => {
+  return new Promise(async (resolve, reject) => {
+    await MongoDB.collection("withdraw")
+      .updateOne(
+        { _id: ObjectId(_id) },
+        {
+          $set: {
+            // status: status,
+            // description: description,
+            err_msg: err_msg,
+            err_img: err_img,
+            upd_by: "robot",
+            upd_date: new Date(moment().format()),
+            upd_prog: "robot",
+          },
+        },
+        { upsert: true }
+      )
+      .then((result) => resolve(result))
+      .catch((error) => reject(error));
+  });
+};
+
 module.exports.update_doc_wd = (_id, silp_date, silp_image) => {
   return new Promise(async (resolve, reject) => {
     await MongoDB.collection("withdraw")

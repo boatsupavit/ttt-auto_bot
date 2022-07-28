@@ -314,7 +314,7 @@ module.exports.get_job_doc_wd = (agent_id, robot_accountid) => {
         },
         {
           $project: {
-              id: 1,
+              _id: 1,
               agent_id: "$agent_id",
               description: "$description",
               from_bank_id: "$from_bank_id",
@@ -338,7 +338,7 @@ module.exports.get_job_doc_wd = (agent_id, robot_accountid) => {
       },
       {
           $project: {
-              id: 1,
+              _id: 1,
               agent_id: "$agent_id",
               description: "$description",
               from_bank_id: "$from_bank_id",
@@ -363,7 +363,7 @@ module.exports.get_job_doc_wd = (agent_id, robot_accountid) => {
       },
       {
           $project: {
-              id: 1,
+              _id: 1,
               agent_id: "$agent_id",
               description: "$description",
               from_bank_id: "$from_bank_id",

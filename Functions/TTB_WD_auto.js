@@ -605,7 +605,7 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
       //----------prepare data_wd----------//
       console.log("   ...Prepare data_wd");
       console.log("job =>", job);
-      let { _id, amount, agent_id, memb_id, description, from_bank_id } = job;
+      let { _id, amount, agent_id, memb_id, description, from_account_id } = job;
 
       //------click bank item0-------//
       console.log("   ...click bank web");
@@ -852,7 +852,7 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
         await model.update_member_name(arr_memname[0]._id, nameonbank, desmem);
         boo = true;
       }
-      await model.updatebalance(from_bank_id, balance_after_trans);
+      await model.updatebalance(from_account_id, balance_after_trans);
       silp_date = timetransfer;
       description = description.concat({
         username: "system",
@@ -880,7 +880,6 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
       await driver.sleep(500);
     } catch (err) {
       console.log("****   ...catch step_insert_tranfer_acc", err);
-
       throw err;
     }
   }

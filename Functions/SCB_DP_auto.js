@@ -71,12 +71,14 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
       async function main(driver, acc_type, agent_id) {
         return new Promise(async (resolve, reject) => {
           try {
+            console.log("acc_type => ", acc_type);
+            console.log("agent_id => ", agent_id);
             let account_id_ = await model.getcof_acct(acc_type, agent_id);
             console.log(
               "acc_id is not empty => ",
-              Boolean(account_id.length !== 0)
+              Boolean(account_id_.length !== 0)
             );
-            if (account_id.length !== 0) {
+            if (account_id_.length !== 0) {
               console.log("account_id", account_id_);
               let robot = account_id_[0];
               let acc_id = robot._id;
@@ -293,20 +295,27 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
               throw "ไม่พบบัญชีของเว็บที่จะใช้สำหรับตรวจสอบข้อมูลการฝาก กรุณาตรวจสอบ";
             }
           } catch (err) {
-            await driver.sleep(500);
-            console.log("logout 2");
-            //    let logout  = await driver.wait(until.elementLocated(By.id("Logout_LinkButton")),2000).catch(() => { reject(err)});
-            //     console.log('logoput => ',logout)
-            await driver.findElement(By.id("Logout_LinkButton")).click();
-            console.log("Thankyou 2");
-            let thankyou = await driver.wait(
-              until.elementLocated(By.className("bg-thankyou"))
-            );
-            console.log("Thankyou Screen by normal", thankyou);
-            console.log("DateTime", new Date());
+            try {
+              await driver.sleep(500);
+              console.log("logout 2");
+              //    let logout  = await driver.wait(until.elementLocated(By.id("Logout_LinkButton")),2000).catch(() => { reject(err)});
+              //     console.log('logoput => ',logout)
+              await driver.findElement(By.id("Logout_LinkButton")).click();
+              console.log("Thankyou 2");
+              let thankyou = await driver.wait(
+                until.elementLocated(By.className("bg-thankyou"))
+              );
+              console.log("Thankyou Screen by normal", thankyou);
+              console.log("DateTime", new Date());
 
-            await driver.close();
-            reject(err);
+              await driver.close();
+              reject(err);
+            } catch (err) {
+              await driver.sleep(500);
+              console.log("close driver");
+              await driver.close();
+              reject(err);
+            }
           }
         });
       }

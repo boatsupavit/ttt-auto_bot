@@ -303,7 +303,7 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
               await driver.findElement(By.id("Logout_LinkButton")).click();
               console.log("Thankyou 2");
               let thankyou = await driver.wait(
-                until.elementLocated(By.className("bg-thankyou"))
+                until.elementLocated(By.className("bg-thankyou")),30000
               );
               console.log("Thankyou Screen by normal", thankyou);
               console.log("DateTime", new Date());

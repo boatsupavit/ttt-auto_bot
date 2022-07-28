@@ -65,7 +65,10 @@ module.exports = async () => {
             await SCB_DP.dp_scb_auto(driver, acc_type, agent_id, bank_id);
           } else {
             let account_id = await model.getcof_acct(acc_type, agent_id);
-            console.log("acc_id is not empty => ", Boolean(account_id.length !== 0));
+            console.log(
+              "acc_id is not empty => ",
+              Boolean(account_id.length !== 0)
+            );
             if (account_id.length !== 0) {
               let robot = account_id[0];
               let agnet_bankacc_id = robot._id;
@@ -102,7 +105,7 @@ module.exports = async () => {
                 console.log("working ", working);
               }
             } else {
-              throw ("ไม่พบบัญชีของเว็บที่จะใช้ดำเนินการถอน กรุณาตรวจสอบ")
+              throw "ไม่พบบัญชีของเว็บที่จะใช้ดำเนินการถอน กรุณาตรวจสอบ";
             }
           }
         }
@@ -114,7 +117,6 @@ module.exports = async () => {
           working + " " + new Date()
         );
         setTimeout(() => {
-          i = 0;
           console.log(
             "----------------end 2 min for timeout",
             working + " " + new Date()

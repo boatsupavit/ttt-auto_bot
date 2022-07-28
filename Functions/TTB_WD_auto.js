@@ -9,7 +9,6 @@ const chrome = require("selenium-webdriver/chrome");
 const { request } = require("express");
 const imageToBase64 = require("image-to-base64");
 const { CronJob } = require("cron");
-const { job } = require("cron");
 
 module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
   return new Promise(async (resolve, reject) => {
@@ -39,8 +38,7 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
         );
       } catch (err) {
         await driver.sleep(150000);
-        await driver.close();
-        reject(err);
+        throw err;
       }
       let i = 0;
       //----i = 30 : 5 min
@@ -225,9 +223,15 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
         await step_logout(driver);
         reject(err);
       } catch (err) {
-        console.log("start Logout...");
-        await step_logout(driver);
-        reject(err);
+        try {
+          console.log("start catch Logout...");
+          await step_logout(driver);
+          reject(err);
+        } catch {
+          console.log("catch close driver...");
+          await driver.close();
+          reject(err);
+        }
       }
     }
   });
@@ -273,6 +277,19 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
             console.log("No alert accept");
           }
           throw "ไม่สามารถดำเนินการถอนได้เนื่องจากระบบธนาคารช้า กรุณารอ 10 นาทีเพื่อดำเนินการถอนใหม่อีกครั้ง";
+        } else if (textalert.includes("wrong User ID/Password") === true) {
+          try {
+            await driver
+              .switchTo()
+              .alert()
+              .accept()
+              .catch(() => {
+                throw err;
+              });
+          } catch {
+            console.log("No alert accept");
+          }
+          throw "ไม่สามารถดำเนินการถอนได้เนื่องจาก User ID/Password ที่ใช้เข้าระบบไม่ถูกต้อง";
         }
       } else {
         console.log("No Alert login");
@@ -605,7 +622,8 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
       //----------prepare data_wd----------//
       console.log("   ...Prepare data_wd");
       console.log("job =>", job);
-      let { _id, amount, agent_id, memb_id, description, from_account_id } = job;
+      let { _id, amount, agent_id, memb_id, description, from_account_id } =
+        job;
 
       //------click bank item0-------//
       console.log("   ...click bank web");

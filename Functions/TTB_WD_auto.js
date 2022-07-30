@@ -46,7 +46,7 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
       //----i = 90 : 15 min
       //----i = 180 : 30 min
       //----i = 360 : 60 min
-      for (; i < 180; ) {
+      for (; i < 360; ) {
         console.log("set i =>", i);
         let all_job = await model.get_job_doc_wd(agent_id, agnet_bankacc_id);
         console.log("all job =>", all_job);
@@ -772,6 +772,7 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
         )
         .getText();
       balance_after_trans = balance_after_trans.replace(/\฿/g, "");
+      balance_after_trans = balance_after_trans.replace(/\,/g, "");
       console.log("balance_after_trans =>", balance_after_trans);
       let acc = await driver
         .wait(

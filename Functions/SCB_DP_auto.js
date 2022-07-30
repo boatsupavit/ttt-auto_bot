@@ -97,6 +97,9 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
                 .findElement(By.name("PASSWD"))
                 .sendKeys(robot_acc_pwd);
               await driver.findElement(By.id("lgin")).click();
+
+              // await driver.sleep(20000);
+
               //click select account menu
               await driver.findElement(By.id("Image3")).click();
               //click account no.1
@@ -263,12 +266,15 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
                     );
                   }
                 }
-                await driver.findElement(By.id("DataProcess_Link3")).click();
+                await driver
+                  .wait(until.elementLocated(By.id("DataProcess_Link3")), 30000)
+                  .click();
+                // await driver.findElement(By.id("DataProcess_Link3")).click();
                 console.log("Click history statement");
               }
               //end funtion
 
-              let iterator = 150;
+              let iterator = 1000;
               for (var i = 1; i <= iterator; i++) {
                 await roundOfDayStatement();
                 console.log(
@@ -290,7 +296,7 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
               console.log("Thankyou Screen by normal", thankyou);
               console.log("DateTime", new Date());
               await driver.close();
-              resolve(false);
+              reject(false);
             } else {
               throw "ไม่พบบัญชีของเว็บที่จะใช้สำหรับตรวจสอบข้อมูลการฝาก กรุณาตรวจสอบ";
             }
@@ -303,7 +309,8 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
               await driver.findElement(By.id("Logout_LinkButton")).click();
               console.log("Thankyou 2");
               let thankyou = await driver.wait(
-                until.elementLocated(By.className("bg-thankyou")),30000
+                until.elementLocated(By.className("bg-thankyou")),
+                30000
               );
               console.log("Thankyou Screen by normal", thankyou);
               console.log("DateTime", new Date());

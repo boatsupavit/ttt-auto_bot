@@ -38,8 +38,8 @@ module.exports = async () => {
 
           //----------get ip-----------//
           // let ip = await fn.get_ip();
-          // let ip = "192.168.1.78"; //----deposit
-          let ip = "192.168.1.89"; //----withdraw
+          let ip = "192.168.1.78"; //----deposit
+          // let ip = "192.168.1.89"; //----withdraw
           //--------------------------//
 
           console.log("ip =>", ip);
@@ -52,7 +52,7 @@ module.exports = async () => {
           console.log("agent_id =>", agent_id);
           if (acc_type == "deposit") {
             let setChromeOptions = new chrome.Options();
-            //setChromeOptions.addArguments('--headless');
+            // setChromeOptions.addArguments('--headless');
             setChromeOptions.addArguments("--no-sandbox");
             setChromeOptions.addArguments("--hide-scrollbars");
             setChromeOptions.addArguments("window-size=1024,768");
@@ -83,7 +83,7 @@ module.exports = async () => {
               if (Object.keys(all_job).length !== 0) {
                 const setChromeOptions = new chrome.Options();
                 setChromeOptions.addArguments("--no-sandbox");
-                // setChromeOptions.addArguments("--headless");
+                setChromeOptions.addArguments("--headless");
                 setChromeOptions.addArguments("--hide-scrollbars");
                 setChromeOptions.addArguments("window-size=1280,1024");
                 setChromeOptions.addArguments("--disable-gpu");

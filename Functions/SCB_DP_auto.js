@@ -110,7 +110,9 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
                   )
                 )
                 .getAttribute("innerText");
-              console.log(balance);
+              balance = balance.replace(/\,/g, "");
+              console.log("acc_id =>", acc_id);
+              console.log("balance =>", balance);
               let update = await model.updatebalance(acc_id, balance);
               console.log(update);
               await driver

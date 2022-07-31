@@ -38,8 +38,8 @@ module.exports = async () => {
 
           //----------get ip-----------//
           // let ip = await fn.get_ip();
-          let ip = "192.168.1.78"; //----deposit
-          // let ip = "192.168.1.89"; //----withdraw
+          // let ip = "192.168.1.78"; //----deposit
+          let ip = "192.168.1.89"; //----withdraw
           //--------------------------//
 
           console.log("ip =>", ip);

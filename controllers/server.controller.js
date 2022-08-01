@@ -83,7 +83,7 @@ module.exports = async () => {
               if (Object.keys(all_job).length !== 0) {
                 const setChromeOptions = new chrome.Options();
                 setChromeOptions.addArguments("--no-sandbox");
-                setChromeOptions.addArguments("--headless");
+                // setChromeOptions.addArguments("--headless");
                 setChromeOptions.addArguments("--hide-scrollbars");
                 setChromeOptions.addArguments("window-size=1280,1024");
                 setChromeOptions.addArguments("--disable-gpu");

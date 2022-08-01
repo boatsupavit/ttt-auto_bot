@@ -268,11 +268,37 @@ module.exports.dp_scb_auto = (driver, acc_type, agent_id) => {
                     );
                   }
                 }
-                await driver
-                  .wait(until.elementLocated(By.id("DataProcess_Link3")), 30000)
-                  .click();
-                // await driver.findElement(By.id("DataProcess_Link3")).click();
-                console.log("Click history statement");
+                // await driver
+                //   .wait(until.elementLocated(By.id("DataProcess_Link3")), 30000)
+                //   .click();
+                // // await driver.findElement(By.id("DataProcess_Link3")).click();
+                // console.log("Click history statement");
+                if (countrows > 0) {
+                  await driver
+                    .wait(
+                      until.elementLocated(By.id("DataProcess_Link3")),
+                      30000
+                    )
+                    .click();
+                  // await driver.findElement(By.id("DataProcess_Link3")).click();
+                  console.log("Click history statement");
+                } else {
+                  await driver
+                    .wait(
+                      until.elementLocated(
+                        By.id("DataProcess_Back_LinkButton")
+                      ),
+                      30000
+                    )
+                    .click();
+                  // await driver.findElement(By.id("DataProcess_Link3")).click();
+                  console.log("Click back because not found table");
+                  await driver
+                    .findElement(
+                      By.id("DataProcess_SaCaGridView_SaCa_LinkButton_0")
+                    )
+                    .click();
+                }
               }
               //end funtion
 

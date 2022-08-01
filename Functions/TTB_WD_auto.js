@@ -801,6 +801,15 @@ module.exports.wd_ttb_auto = (driver, acc_type, agent_id) => {
         )
         .getText();
       console.log("timetransfer =>", timetransfer);
+      let hidebtn = await driver.wait(
+        until.elementLocated(By.id("frmIBTransferNowCompletion_lblHide")),
+        30000
+      );
+      console.log("balance hide =>", hidebtn.getText());
+      if (hidebtn.getText() == "Hide") {
+        await hidebtn.click();
+      }
+      await driver.sleep(500);
       //---------------Task Screen-------------//
       console.log("   ...task screen");
       // let base64 = await driver
